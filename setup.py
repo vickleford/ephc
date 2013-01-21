@@ -13,7 +13,7 @@ config = {
     'install_requires': ['PyYAML', 'python-memcached', 'MySQL-python', 'psycopg2'],
     'packages': ['ephc'],
     'name': 'ephc',
-    'entry_points' = {
+    'entry_points': {
         'console_scripts': [
             'ephc = ephc.script:run'
         ]

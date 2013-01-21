@@ -42,7 +42,7 @@ class PgsqlHC(object):
         self.code = None # is this used?
         
         # out of order to be consistent with connect_mysql args
-        self.conn_str = "host='%s' dbname='%s' user='%s' password='%s'" % (host, db, user, passwd) = 
+        self.conn_str = "host='%s' dbname='%s' user='%s' password='%s'" % (host, db, user, passwd)
         
     def check_pgsql(self):
         try:

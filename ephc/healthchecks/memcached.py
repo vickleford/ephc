@@ -61,7 +61,7 @@ class MemcacheHC(object):
             delete_ok = False
         
         # final check
-        if and set_ok and read_ok and delete_ok:
+        if set_ok and read_ok and delete_ok:
             return True
         else:
             return False
