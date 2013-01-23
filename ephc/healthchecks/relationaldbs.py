@@ -7,17 +7,19 @@ import _mysql_exceptions
 
 class MysqlHC(object):
     
-    def __init__(self, host, user, passwd, db, test_auery="select 1"):
-        self.test_query = test_query
+    #def __init__(self, host, user, passwd, db, test_query="select 1"):
+    def __init__(self, host, **kwargs):
+        self.test_query = kwargs['query']
         self.message = None
         self.code = None
         self.params = { 'host': host,
-                        'user': user,
-                        'passwd': passwd,
-                        'db': db }
+                        'user': kwargs['user'],
+                        'passwd': kwargs['passwd'],
+                        'db': kwargs['db'] }
         
     def check_mysql(self):
         try:
+            db_conn = None
             db_conn = MySQLdb.connect(**self.params)
             cur = db_conn.cursor()
             success = cur.execute(self.test_query)
@@ -33,16 +35,20 @@ class MysqlHC(object):
             if db_conn is not None:
                 db_conn.close()
                 
+    def do_check(self):
+        return self.check_mysql()
+                
                 
 class PgsqlHC(object):
     
-    def __init__(self, host, user, passwd, db, test_query="select 1"):
-        self.test_query = test_query
+    #def __init__(self, host, user, passwd, db, test_query="select 1"):
+    def __init__(self, host, **kwargs):
+        self.test_query = kwargs['query']
         self.message = None
         self.code = None # is this used?
         
         # out of order to be consistent with connect_mysql args
-        self.conn_str = "host='%s' dbname='%s' user='%s' password='%s'" % (host, db, user, passwd)
+        self.conn_str = "host='%s' dbname='%s' user='%s' password='%s'" % (host, kwargs['db'], kwargs['user'], kwargs['passwd'])
         
     def check_pgsql(self):
         try:
@@ -58,6 +64,9 @@ class PgsqlHC(object):
         finally:
             if conn is not None:
                 conn.close()
+                
+    def do_check(self):
+        return self.check_pgsql()
 
 #
 # let's keep this around for now and delete later

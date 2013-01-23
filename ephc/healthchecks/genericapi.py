@@ -3,64 +3,61 @@ import urllib2
 
 class GenericAPIHC(object):
     
-    def __init__(self, url, timeout=5, fail_status=500, match=None):
+    def __init__(self, url, timeout=5, fail_status=500, match=None, **kwargs):
         
         self.message = None
+        self.url = url
+        self.timeout = timeout
+        self.fail_status=fail_status
+        self.match=match
         self.conn = None
         
-    def connect(self, url, timeout=5, fail_status=500):
+    def connect(self):
         try:
-            self.conn = None
-            self.conn = urllib2.urlopen(url, timeout=timeout)
+            self.conn = urllib2.urlopen(self.url, timeout=self.timeout)
         except ValueError, e:
             self.message = e.message
         except urllib2.HTTPError, e:
-            if e.code < fail_status:
-                e.message = "Got response %d, but with error: %s" % (e.code, e.reason)
+            if e.code < self.fail_status:
+                self.message = "Got a response, but with error: %d: %s" % (e.code, e.reason)
             else:
                 self.message = e
         except urllib2.URLError, e:
             self.message = e
-        finally:
-            if conn:
-                conn.close()
+                
+    def disconnect(self):
+        if self.conn is not None:
+            self.conn.close()
     
-    def match_content(self, match=None):
+    def check_status(self):
+        self.connect()
+        
+        try:
+            if self.conn.code < self.fail_status:
+                ok = True
+            else:
+                ok = False
+        except AttributeError:
+            # there was no connection
+            return False
+        
+        self.disconnect()
+        return ok
+        
+    def match_content(self):
+        connect()
+        
         content = self.conn.read()
         if match in content:
             return True
         else:
             return False
-    
-    
-    
-
-#
-# let's keep this around for now and delete later
-#    
-
-def _check_api(url, timeout=5, fail_status=500):
-    "Return True if a HTTP status code is less than fail_status."
-
-    try:
-        conn = None
-        conn = urllib2.urlopen(url, timeout=timeout)
-    except urllib2.HTTPError, e:
-        if e.code < fail_status:
-            print "Got a response (%d), but with error: %s" % (e.code, e.reason)
-            return True
-        else:
-            print "%s" % e
-    except urllib2.URLError, e:
-        print "%s" % e
-    else:
-        # prevents OK messages from going out on the same line
-        print
-    finally:
-        if conn:
-            conn.close()
-    
-    if conn is not None and conn.code < fail_status:
-        return True
-    else:
-        return False
+        
+        self.disconnect()
+        
+    def do_check(self):
+        #integrate check_status and match_content into one big ole package
+        # watch out for the self.disconnect() in match_content and 
+        # check_status! put those in a try...finally type thing later
+        #something like this....
+        return self.check_status()

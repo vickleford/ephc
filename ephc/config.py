@@ -17,10 +17,15 @@ for filename in config_locations:
     try:    
         with open(filename) as f:
             config = yaml.load(f)
-            print "Loaded config file %s" % filename
+            #print "Loaded config file %s" % filename
+            foundconfig = True
             break
     except IOError, ioe:
         if ioe.errno == 2:
             # np, try the next file
-            print "Could not load %s" % filename
-
+            #print "Could not load %s" % filename
+            foundconfig = False
+            
+if foundconfig is False:
+    print "Could not find configuration file!"
+    sys.exit(1)

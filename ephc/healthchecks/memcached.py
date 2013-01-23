@@ -6,7 +6,7 @@ import memcache
 
 class MemcacheHC(object):
 
-    def __init__(self, memcache_servers):
+    def __init__(self, memcache_servers, **kwargs):
         self.message = None
         self.mc = memcache.Client(memcache_servers, debug=0)
 
@@ -43,19 +43,19 @@ class MemcacheHC(object):
         test_value = time.time()
         
         # set a key
-        set_ok = _set_key(test_key, test_value)
+        set_ok = self._set_key(test_key, test_value)
 
         # read the key
-        if _read_key(test_key) == test_value:
+        if self._read_key(test_key) == test_value:
             read_ok = True
         else:
             read_ok = False
             
         # delete the key
-        delete_ok = _delete_key(test_key)
+        delete_ok = self._delete_key(test_key)
         
         # was it really deleted? 
-        if _read_key(test_key) == None:
+        if self._read_key(test_key) == None:
             delete_ok = True
         else:
             delete_ok = False
@@ -65,6 +65,9 @@ class MemcacheHC(object):
             return True
         else:
             return False
+            
+    def do_check(self):
+        return self.check_memcache()
             
         
         
