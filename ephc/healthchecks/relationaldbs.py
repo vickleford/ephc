@@ -13,9 +13,9 @@ class MysqlHC(object):
         self.message = None
         self.code = None
         self.params = { 'host': host,
-                        'user': kwargs['user'],
-                        'passwd': kwargs['passwd'],
-                        'db': kwargs['db'] }
+                        'user': kwargs['username'],
+                        'passwd': kwargs['password'],
+                        'db': kwargs['database'] }
         
     def check_mysql(self):
         try:
@@ -48,7 +48,7 @@ class PgsqlHC(object):
         self.code = None # is this used?
         
         # out of order to be consistent with connect_mysql args
-        self.conn_str = "host='%s' dbname='%s' user='%s' password='%s'" % (host, kwargs['db'], kwargs['user'], kwargs['passwd'])
+        self.conn_str = "host='%s' dbname='%s' user='%s' password='%s'" % (host, kwargs['database'], kwargs['username'], kwargs['password'])
         
     def check_pgsql(self):
         try:
