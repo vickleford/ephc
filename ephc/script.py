@@ -25,12 +25,18 @@ def get_arguments():
 def check_endpoint(endpoint, check_class, **kwargs):
     '''Return a tuple of info about the endpoint checked.
     
+    Arguments:
     endpoint is the value as it appears in config.yaml
     check_class is the name of the class as appears in local namespace
         from the healthchecks package
     kwargs' key will match additional parameters to a section of config, 
         such as a database username or a password. This will generally
         be built by check_all()
+        
+    Return values:
+    hc_ok is a boolean representing whether the endpoint passed or failed
+    hc.message is a description of why the check failed or empty if it passed
+    lap_time is the round trip time representing how long the check took
     '''
     
     start_time = time()
