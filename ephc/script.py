@@ -11,6 +11,8 @@ from config import config
 
 def get_arguments():
     parser = optparse.OptionParser()
+    parser.add_option("-t", "--timeout", dest="timeout",
+                      help="Time in seconds to time out a connection")
     #parser.add_option("-o", "--output", dest="output_type",
                       #help="help message", metavar="OPTION")
     #parser.add_option("-q", "--quiet",
@@ -56,7 +58,10 @@ def check_all(config_chunk, check_class, *args):
     '''
     
     for section in config_chunk:
-        endpoint = config_chunk[section]['endpoint']
+        try:
+            endpoint = config_chunk[section]['endpoint']
+        except KeyError:
+            endpoint = config_chunk[section]['endpoints']
         
         # ... build kwargs to send to check_endpoint from args
         params = {}
