@@ -52,12 +52,16 @@ def check_endpoint(endpoint, check_class, **kwargs):
     
 def check_all(config_chunk, check_class, *args):
     '''Pass a section of config to check with check_endpoint.
+    Health checks all entities in that chunk of config.
     
     args should be any items in the config section additional
     to endpoint.
     '''
     
+    summary = {}
+    
     for section in config_chunk:
+        results = {}
         try:
             endpoint = config_chunk[section]['endpoint']
         except KeyError:
@@ -68,8 +72,20 @@ def check_all(config_chunk, check_class, *args):
         for arg in args:
             params.update({arg: config_chunk[section][arg]})
         
-        result = check_endpoint(endpoint, check_class, **params)
-        print section, result
+        results['Success'], results['Reason'], results['Elapsed'] = check_endpoint(endpoint, check_class, **params)
+        summary.update({section: results})
+        #print section, result
+        
+    return summary
+        
+        
+def aggregator():
+    """Placeholder for an idea. Right now check_all gives back 1 dict per
+    chunk of config you ask for. This will, if needed, aggregate all those
+    dicts with section names.
+    """
+    
+    pass
 
 
 def run():
