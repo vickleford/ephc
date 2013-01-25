@@ -72,7 +72,8 @@ def check_all(config_chunk, check_class, *args):
         for arg in args:
             params.update({arg: config_chunk[section][arg]})
         
-        results['Success'], results['Reason'], results['Elapsed'] = check_endpoint(endpoint, check_class, **params)
+        results['Success'], results['Reason'], results['Elapsed'] = \
+            check_endpoint(endpoint, check_class, **params)
         summary.update({section: results})
         #print section, result
         
@@ -90,14 +91,16 @@ def aggregator():
 
 def run():
     # generic apis
-    check_all(config['generic_api'], healthchecks.genericapi.GenericAPIHC)    
+    print check_all(config['generic_api'], healthchecks.genericapi.GenericAPIHC)    
     
     # mysql
-    check_all(config['databases']['mysql'], healthchecks.relationaldbs.MysqlHC,
+    check_all(config['databases']['mysql'], 
+              healthchecks.relationaldbs.MysqlHC,
               'username', 'database', 'password', 'query')
               
     # pgsql
-    check_all(config['databases']['pgsql'], healthchecks.relationaldbs.PgsqlHC,
+    check_all(config['databases']['pgsql'], 
+             healthchecks.relationaldbs.PgsqlHC,
              'username', 'database', 'password', 'query')
              
     # memcached
