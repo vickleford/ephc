@@ -7,7 +7,6 @@ import healthchecks.memcached
 import healthchecks.relationaldbs
 import healthchecks.relationaldbs
 
-import formatters.stdout
 import formatters.json_formatter
 import formatters.bashmon
 
