@@ -1,3 +1,4 @@
+import os
 import optparse
 from time import time
 
@@ -6,7 +7,19 @@ import healthchecks.memcached
 import healthchecks.relationaldbs
 import healthchecks.relationaldbs
 
+import formatters.stdout
+import formatters.json_formatter
+import formatters.bashmon
+
 from config import config
+
+# this will move to an argument later
+verbose = False
+
+def get_console_size():
+    rows, columns = os.popen('stty size', 'r').read().split()
+    
+    return (rows, columns)
 
 
 def get_arguments():
@@ -41,13 +54,24 @@ def check_endpoint(endpoint, check_class, **kwargs):
     lap_time is the round trip time representing how long the check took
     '''
     
+    if verbose:
+        print "Checking {ep}...".format(ep=endpoint),
+        
     start_time = time()
     hc = check_class(endpoint, **kwargs)
     hc_ok = hc.do_check()
     end_time = time()
-    lap_time = end_time - start_time
+    lap_time = round(end_time - start_time, 2)
     
-    return (hc_ok, hc.message, lap_time)
+    if verbose:
+        if hc_ok:
+            print "\n{0:>{1}}".format("[ PASSED ]", get_console_size()[1])
+        else:
+            print hc.message
+            print "{0:>{1}}".format("[ FAILED ]", get_console_size()[1])
+        print
+    
+    return (hc_ok, str(hc.message), lap_time)
 
     
 def check_all(config_chunk, check_class, *args):
@@ -74,34 +98,53 @@ def check_all(config_chunk, check_class, *args):
         
         results['Success'], results['Reason'], results['Elapsed'] = \
             check_endpoint(endpoint, check_class, **params)
+        results['Endpoint'] = endpoint
         summary.update({section: results})
-        #print section, result
         
     return summary
         
         
-def aggregator():
+def aggregator(**kwargs):
     """Placeholder for an idea. Right now check_all gives back 1 dict per
     chunk of config you ask for. This will, if needed, aggregate all those
     dicts with section names.
     """
     
-    pass
+    aggregated_results = {}
+    for report in kwargs:
+        aggregated_results.update({report: kwargs[report]})
+        
+    return aggregated_results
+    
 
 
 def run():
     # generic apis
-    print check_all(config['generic_api'], healthchecks.genericapi.GenericAPIHC)    
+    genapi_results = check_all(config['generic_api'], 
+                               healthchecks.genericapi.GenericAPIHC)    
     
     # mysql
-    check_all(config['databases']['mysql'], 
-              healthchecks.relationaldbs.MysqlHC,
-              'username', 'database', 'password', 'query')
+    mysql_results = check_all(config['databases']['mysql'], 
+                              healthchecks.relationaldbs.MysqlHC,
+                              'username', 'database', 'password', 'query')
               
     # pgsql
-    check_all(config['databases']['pgsql'], 
-             healthchecks.relationaldbs.PgsqlHC,
-             'username', 'database', 'password', 'query')
+    pgsql_results = check_all(config['databases']['pgsql'], 
+                              healthchecks.relationaldbs.PgsqlHC,
+                              'username', 'database', 'password', 'query')
              
     # memcached
-    check_all(config['memcached'], healthchecks.memcached.MemcacheHC)
+    memcached_results = check_all(config['memcached'], 
+                                  healthchecks.memcached.MemcacheHC)
+                                  
+    grand_summary = aggregator(generic_api=genapi_results, mysql=mysql_results,
+                               pgsql=pgsql_results, memcached=memcached_results)
+                               
+    #formatter = formatters.stdout.StdoutFormatter(grand_summary)
+    #formatter.format()
+    
+    #jsonformatter = formatters.json_formatter.JsonFormatter(grand_summary)
+    #print jsonformatter.format()
+    
+    formatter = formatters.bashmon.BashMon(grand_summary)
+    formatter.format()

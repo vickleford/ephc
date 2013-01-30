@@ -1,4 +1,5 @@
 import urllib2
+import socket
 
 
 class GenericAPIHC(object):
@@ -23,6 +24,8 @@ class GenericAPIHC(object):
             else:
                 self.message = e
         except urllib2.URLError, e:
+            self.message = e
+        except socket.timeout, e:
             self.message = e
                 
     def disconnect(self):
