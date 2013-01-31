@@ -4,23 +4,28 @@ import socket
 
 class GenericAPIHC(object):
     
-    def __init__(self, url, timeout=5, fail_status=500, match=None, **kwargs):
+    def __init__(self, url, timeout=5, fail_status=500, **kwargs):
         
         self.message = None
         self.url = url
         self.timeout = timeout
-        self.fail_status=fail_status
-        self.match=match
+        self.fail_status = fail_status
+        self.got_code = None
+        self.match = kwargs['match']
         self.conn = None
+        self.content = None
         
     def connect(self):
         try:
             self.conn = urllib2.urlopen(self.url, timeout=self.timeout)
+            self.got_code = self.conn.code
+            self.content = self.conn.read()
         except ValueError, e:
             self.message = e.message
         except urllib2.HTTPError, e:
-            if e.code < self.fail_status:
+            if e.code <= self.fail_status:
                 self.message = "Got a response, but with error: %d: %s" % (e.code, e.reason)
+                self.got_code = e.code
             else:
                 self.message = e
         except urllib2.URLError, e:
@@ -33,10 +38,10 @@ class GenericAPIHC(object):
             self.conn.close()
     
     def check_status(self):
-        self.connect()
+        #self.connect()
         
         try:
-            if self.conn.code < self.fail_status:
+            if self.got_code <= self.fail_status:
                 ok = True
             else:
                 ok = False
@@ -44,23 +49,27 @@ class GenericAPIHC(object):
             # there was no connection
             return False
         
-        self.disconnect()
         return ok
         
     def match_content(self):
-        connect()
         
-        content = self.conn.read()
-        if match in content:
-            return True
-        else:
+        try:
+            if self.match in self.content:
+                return True
+            else:
+                return False
+        except TypeError:
+            # self.content is still none because we couldn't connect
             return False
-        
-        self.disconnect()
-        
+                
     def do_check(self):
         #integrate check_status and match_content into one big ole package
         # watch out for the self.disconnect() in match_content and 
         # check_status! put those in a try...finally type thing later
         #something like this....
-        return self.check_status()
+        self.connect()
+        status_ok = self.check_status()
+        content_ok = self.match_content()
+        self.disconnect()
+        
+        return self.check_status() and content_ok

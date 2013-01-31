@@ -1,5 +1,4 @@
 import os
-import optparse
 from time import time
 
 import healthchecks.genericapi
@@ -10,32 +9,18 @@ import healthchecks.relationaldbs
 import formatters.json_formatter
 import formatters.bashmon
 
+from argument import args
 from config import config
 
-# this will move to an argument later
-verbose = False
 
 def get_console_size():
+    '''Return a tuple of the console size (height x width).'''
+    
     rows, columns = os.popen('stty size', 'r').read().split()
     
     return (rows, columns)
 
 
-def get_arguments():
-    parser = optparse.OptionParser()
-    parser.add_option("-t", "--timeout", dest="timeout",
-                      help="Time in seconds to time out a connection")
-    #parser.add_option("-o", "--output", dest="output_type",
-                      #help="help message", metavar="OPTION")
-    #parser.add_option("-q", "--quiet",
-                      #action="store_false", dest="verbose", default=True,
-                      #help="dont print blah blah")
-                      
-    (options, args) = parser.parse_args()
-    
-    return options
-    
-    
 def check_endpoint(endpoint, check_class, **kwargs):
     '''Return a tuple of info about the endpoint checked.
     
@@ -53,7 +38,7 @@ def check_endpoint(endpoint, check_class, **kwargs):
     lap_time is the round trip time representing how long the check took
     '''
     
-    if verbose:
+    if args.verbose:
         print "Checking {ep}...".format(ep=endpoint),
         
     start_time = time()
@@ -62,7 +47,8 @@ def check_endpoint(endpoint, check_class, **kwargs):
     end_time = time()
     lap_time = round(end_time - start_time, 2)
     
-    if verbose:
+    if args.verbose:
+        print "{0}s".format(lap_time)
         if hc_ok:
             print "\n{0:>{1}}".format("[ PASSED ]", get_console_size()[1])
         else:
@@ -116,34 +102,56 @@ def aggregator(**kwargs):
     return aggregated_results
     
 
-
-def run():
+def make_results():
+    '''Return a results dict of all sections called into health check.'''
+    
+    grand_summary = {}
+    
     # generic apis
     genapi_results = check_all(config['generic_api'], 
-                               healthchecks.genericapi.GenericAPIHC)    
+                               healthchecks.genericapi.GenericAPIHC,
+                               'match')
+                               
+    grand_summary.update({'generic_api': genapi_results})
     
     # mysql
     mysql_results = check_all(config['databases']['mysql'], 
                               healthchecks.relationaldbs.MysqlHC,
                               'username', 'database', 'password', 'query')
+                              
+    grand_summary.update({'mysql': mysql_results})
               
     # pgsql
     pgsql_results = check_all(config['databases']['pgsql'], 
                               healthchecks.relationaldbs.PgsqlHC,
                               'username', 'database', 'password', 'query')
+                              
+    grand_summary.update({'pgsql': pgsql_results})
              
     # memcached
     memcached_results = check_all(config['memcached'], 
                                   healthchecks.memcached.MemcacheHC)
-                                  
-    grand_summary = aggregator(generic_api=genapi_results, mysql=mysql_results,
-                               pgsql=pgsql_results, memcached=memcached_results)
-                               
-    #formatter = formatters.stdout.StdoutFormatter(grand_summary)
-    #formatter.format()
+                              
+    grand_summary.update({'memcached': memcached_results})
     
-    #jsonformatter = formatters.json_formatter.JsonFormatter(grand_summary)
-    #print jsonformatter.format()
+    return grand_summary
     
-    formatter = formatters.bashmon.BashMon(grand_summary)
-    formatter.format()
+
+def show_results(results):
+    '''Do something with a results dict.'''
+    
+    # this can be cleaned up to do less work later. fugget.
+    if args.format == 'bashmon':
+        formatter = formatters.bashmon.BashMon(results)
+        formatter.format()
+    elif args.format == 'json':
+        formatter = formatters.json_formatter.JsonFormatter(results) 
+        output = formatter.format()
+        # ok, now do stuff with output... for example
+        print output
+    
+    
+def run():
+    results = make_results()
+    show_results(results)
+    
