@@ -1,5 +1,6 @@
 import urllib2
 import socket
+import ssl
 
 
 class GenericAPIHC(object):
@@ -32,6 +33,8 @@ class GenericAPIHC(object):
             self.message = e
         except socket.timeout, e:
             self.message = e
+        except ssl.SSLError, e:
+            self.message = e
                 
     def disconnect(self):
         if self.conn is not None:
@@ -53,6 +56,10 @@ class GenericAPIHC(object):
         
     def match_content(self):
         
+        # was match even given?
+        if self.match is None:
+            return True
+            
         try:
             if self.match in self.content:
                 return True

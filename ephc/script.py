@@ -48,7 +48,7 @@ def check_endpoint(endpoint, check_class, **kwargs):
     lap_time = round(end_time - start_time, 2)
     
     if args.verbose:
-        print "{0}s".format(lap_time)
+        print "{0}s".format(lap_time),
         if hc_ok:
             print "\n{0:>{1}}".format("[ PASSED ]", get_console_size()[1])
         else:
@@ -79,8 +79,13 @@ def check_all(config_chunk, check_class, *args):
         # ... build kwargs to send to check_endpoint from args
         params = {}
         for arg in args:
-            params.update({arg: config_chunk[section][arg]})
-        
+            try:
+                params.update({arg: config_chunk[section][arg]})
+            except KeyError, e:
+                # some configs are optional
+                if arg == "match":
+                    params.update({arg: None})
+                
         results['Success'], results['Reason'], results['Elapsed'] = \
             check_endpoint(endpoint, check_class, **params)
         results['Endpoint'] = endpoint
