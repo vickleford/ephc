@@ -5,12 +5,12 @@ import ssl
 
 class GenericAPIHC(object):
     
-    def __init__(self, url, timeout=5, fail_status=500, **kwargs):
+    def __init__(self, url, **kwargs):
         
         self.message = None
         self.url = url
-        self.timeout = timeout
-        self.fail_status = fail_status
+        self.timeout = kwargs['timeout']
+        self.fail_status = kwargs['code']
         self.got_code = None
         self.match = kwargs['match']
         self.conn = None
@@ -41,7 +41,6 @@ class GenericAPIHC(object):
             self.conn.close()
     
     def check_status(self):
-        #self.connect()
         
         try:
             if self.got_code <= self.fail_status:
@@ -70,10 +69,6 @@ class GenericAPIHC(object):
             return False
                 
     def do_check(self):
-        #integrate check_status and match_content into one big ole package
-        # watch out for the self.disconnect() in match_content and 
-        # check_status! put those in a try...finally type thing later
-        #something like this....
         self.connect()
         status_ok = self.check_status()
         content_ok = self.match_content()

@@ -6,7 +6,7 @@ import optparse
 
 def get_arguments():
     parser = optparse.OptionParser()
-    parser.add_option("-t", "--timeout", dest="timeout",
+    parser.add_option("-t", "--timeout", dest="timeout", type=int, default=60,
                       help="Time in seconds to time out a connection")
                       
     parser.add_option("-q", "--quiet",

@@ -66,7 +66,7 @@ def check_all(config_chunk, check_class, *args):
     args should be any items in the config section additional
     to endpoint.
     '''
-    
+            
     summary = {}
     
     for section in config_chunk:
@@ -77,7 +77,7 @@ def check_all(config_chunk, check_class, *args):
             endpoint = config_chunk[section]['endpoints']
         
         # ... build kwargs to send to check_endpoint from args
-        params = {}
+        params = {'timeout': globals()['args'].timeout}
         for arg in args:
             try:
                 params.update({arg: config_chunk[section][arg]})
@@ -85,7 +85,7 @@ def check_all(config_chunk, check_class, *args):
                 # some configs are optional
                 if arg == "match":
                     params.update({arg: None})
-                
+                                
         results['Success'], results['Reason'], results['Elapsed'] = \
             check_endpoint(endpoint, check_class, **params)
         results['Endpoint'] = endpoint
@@ -115,7 +115,7 @@ def make_results():
     # generic apis
     genapi_results = check_all(config['generic_api'], 
                                healthchecks.genericapi.GenericAPIHC,
-                               'match')
+                               'match', 'code')
                                
     grand_summary.update({'generic_api': genapi_results})
     
@@ -159,4 +159,3 @@ def show_results(results):
 def run():
     results = make_results()
     show_results(results)
-    
